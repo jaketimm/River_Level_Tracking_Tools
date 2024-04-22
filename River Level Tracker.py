@@ -6,6 +6,8 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 
+Wilson_Ave_Flood_Level = 8.25  # estimated flood level in feet
+
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -32,7 +34,7 @@ class MyApp(QWidget):
 
         self.show()
 
-    def updateSiteId(self, text):
+    def updateSiteId(self, text):  # set river station ID based on dropdown menu
         if text == 'Grand River - Wilson Ave Bridge':
             self.site_id = '04119070'
         elif text == 'Grand River - Downtown GR':
@@ -40,11 +42,18 @@ class MyApp(QWidget):
         elif text == 'Buck Creek at Wilson Ave':
             self.site_id = '04119160'
 
-    def downloadAndDisplayData(self):
+    def downloadAndDisplayData(self):  # button to execute functions
         download_river_data(self.site_id)
         display_river_data(self.site_id)
 
 
+'''
+Function: download_river_data
+Inputs: river station ID
+Outputs: None
+Description: Downloads 30 days of data for a selected river station from the USGS API. The data is saved locally into 
+a file named river_level_data.rdb
+'''
 def download_river_data(station_id):
 
     # Get current date and time
@@ -84,6 +93,12 @@ def download_river_data(station_id):
         print('Failed to download data:', response.status_code)
 
 
+'''
+Function: display_river_data
+Inputs: river station ID
+Outputs: None
+Description: Loads and displays the river data in 6hr increments for a selected river station
+'''
 def display_river_data(station_id):
 
     # Read the RDB file into a DataFrame
@@ -93,16 +108,16 @@ def display_river_data(station_id):
     # Extract the time from the 'datetime' column as a string
     time = df['datetime'].str[11:]
 
-    # Select data for 00:00 and 12:00 only
-    df_12h = df[time.isin(['00:00', '12:00'])]
+    # Select data for every 6 hrs
+    df_6h = df[time.isin(['00:00', '06:00', '12:00', '18:00'])]
     # Convert level values from string to numeric
-    df_12h = df_12h.astype({'level': float}, errors='ignore')
+    df_6h = df_6h.astype({'level': float}, errors='ignore')
 
+    fig, ax1 = plt.subplots(figsize=(12, 8))  # create a subplot and add labels
     # Plot river level data
-    plt.figure(figsize=(10, 6))
-    plt.plot(df_12h['datetime'], df_12h['level'])
-    plt.xlabel('Date (12 hr increments)')
-    plt.ylabel('River Level (feet)')
+    ax1.plot(df_6h['datetime'], df_6h['level'])
+    ax1.set_xlabel('Date (6 hr Increments)')
+    ax1.set_ylabel('River Level (feet)')
 
     if station_id == '04119000':
         plt.title('River Level Over Past 30 Days \n Grand River at Grand Rapids, MI - 04119000')
@@ -110,12 +125,16 @@ def display_river_data(station_id):
         plt.title('Buck Creek Level Over Past 30 Days \n Buck Creek at Wilson Avenue at Grandville, MI - 04119160')
     elif station_id == '04119070':
         plt.title('River Level Over Past 30 Days \n Grand River at State Hwy M-11 at Grandville, MI - 04119070')
+        plt.axhline(y=Wilson_Ave_Flood_Level, color='r', linestyle='-')
+        fig.legend(['River Level', 'Estimated Bike Trail Flood Level'])
 
-    plt.xticks(rotation=45)
+    ax1.tick_params(rotation=45)
+    ax1.set_xticks(ax1.get_xticks()[::4])  # only display one x label per day
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv)  # execute PyQt5 widget
     ex = MyApp()
     sys.exit(app.exec_())
