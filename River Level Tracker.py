@@ -8,11 +8,14 @@ import matplotlib.pyplot as plt
 
 Wilson_Ave_Flood_Level = 8.25  # estimated flood level in feet
 
+
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
 
         self.initUI()
+        self.time_period = 30  # default value of 30 days
+        self.site_id = '04119070'  # default station choice
 
     def initUI(self):
         self.setGeometry(300, 300, 360, 200)
@@ -20,16 +23,23 @@ class MyApp(QWidget):
 
         self.site_id = ''
 
-        self.combo = QComboBox(self)
-        self.combo.addItem('Grand River - Wilson Ave Bridge')
-        self.combo.addItem('Grand River - Downtown GR')
-        self.combo.addItem('Buck Creek at Wilson Ave')
-        self.combo.move(50, 50)
+        self.combo_site = QComboBox(self)
+        self.combo_site.addItem('Grand River - Wilson Ave Bridge')
+        self.combo_site.addItem('Grand River - Downtown GR')
+        self.combo_site.addItem('Buck Creek at Wilson Ave')
+        self.combo_site.move(50, 50)
 
-        self.combo.currentTextChanged.connect(self.updateSiteId)
+        self.combo_site.currentTextChanged.connect(self.updateSiteId)
+
+        self.combo_time = QComboBox(self)
+        self.combo_time.addItem('30 days')
+        self.combo_time.addItem('7 days')
+        self.combo_time.move(135, 100)
+
+        self.combo_time.currentTextChanged.connect(self.updateTimePeriod)
 
         self.button = QPushButton('Download and Display Data', self)
-        self.button.move(75, 100)
+        self.button.move(75, 150)
         self.button.clicked.connect(self.downloadAndDisplayData)
 
         self.show()
@@ -42,25 +52,30 @@ class MyApp(QWidget):
         elif text == 'Buck Creek at Wilson Ave':
             self.site_id = '04119160'
 
-    def downloadAndDisplayData(self):  # button to execute functions
-        download_river_data(self.site_id)
-        display_river_data(self.site_id)
+    def updateTimePeriod(self, text):  # set time period based on dropdown menu
+        if text == '30 days':
+            self.time_period = 30
+        elif text == '7 days':
+            self.time_period = 7
 
+    def downloadAndDisplayData(self):  # button to execute functions
+        download_river_data(self.site_id, self.time_period)
+        display_river_data(self.site_id)
 
 '''
 Function: download_river_data
-Inputs: river station ID
+Inputs: river station ID, number of days of data to download
 Outputs: None
-Description: Downloads 30 days of data for a selected river station from the USGS API. The data is saved locally into 
+Description: Downloads data for a selected river station from the USGS API. The data is saved locally into 
 a file named river_level_data.rdb
 '''
-def download_river_data(station_id):
+def download_river_data(station_id, num_days):
 
     # Get current date and time
     current_datetime = datetime.now()
 
     # Calculate date 30 days ago
-    start_datetime = current_datetime - timedelta(days=30)
+    start_datetime = current_datetime - timedelta(days=num_days)
 
     # Format dates as required by the USGS API
     start_dt = start_datetime.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + '-04:00'
@@ -112,6 +127,7 @@ def display_river_data(station_id):
     df_6h = df[time.isin(['00:00', '06:00', '12:00', '18:00'])]
     # Convert level values from string to numeric
     df_6h = df_6h.astype({'level': float}, errors='ignore')
+    df_6h.iloc[0, 4] = df_6h.iloc[1, 4]  # overwrite '14n' string at beginning of level data
 
     fig, ax1 = plt.subplots(figsize=(12, 8))  # create a subplot and add labels
     # Plot river level data
