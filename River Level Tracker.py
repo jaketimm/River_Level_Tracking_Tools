@@ -6,7 +6,7 @@ import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 
-Wilson_Ave_Flood_Level = 8.25  # estimated flood level in feet
+Wilson_Ave_Flood_Level = 7.5  # estimated flood level in feet
 
 
 class MyApp(QWidget):
@@ -112,7 +112,8 @@ def download_river_data(station_id, num_days):
 Function: display_river_data
 Inputs: river station ID
 Outputs: None
-Description: Loads and displays the river data in 6hr increments for a selected river station
+Description: Loads, samples, and displays the river data for a selected river station
+Increments: 7 days - 2 hr sampling. 30 days - 6 hr sampling
 '''
 def display_river_data(station_id):
 
@@ -136,11 +137,11 @@ def display_river_data(station_id):
     ax1.set_ylabel('River Level (feet)')
 
     if station_id == '04119000':
-        plt.title('River Level Over Past 30 Days \n Grand River at Grand Rapids, MI - 04119000')
+        plt.title('Grand River at Grand Rapids, MI - 04119000')
     elif station_id == '04119160':
-        plt.title('Buck Creek Level Over Past 30 Days \n Buck Creek at Wilson Avenue at Grandville, MI - 04119160')
+        plt.title('Buck Creek at Wilson Avenue at Grandville, MI - 04119160')
     elif station_id == '04119070':
-        plt.title('River Level Over Past 30 Days \n Grand River at State Hwy M-11 at Grandville, MI - 04119070')
+        plt.title('Grand River at State Hwy M-11 at Grandville, MI - 04119070')
         plt.axhline(y=Wilson_Ave_Flood_Level, color='r', linestyle='-')
         fig.legend(['River Level', 'Estimated Bike Trail Flood Level'])
 
