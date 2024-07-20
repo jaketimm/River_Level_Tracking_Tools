@@ -1,6 +1,8 @@
-River tracking GUI Python Codebase Rev 1.0
+# River Tracking Tools Python Codebase 
 
-**River Level GUI**: User selects the USGS station by river location and city, and chooses either 7 or 30 days of river data. The data is downloaded, sampled, and displayed in appropriate increments.
+## **Tools:**
+### **River Level GUI**: 
+**Description**: User selects the USGS station by river location and city, and chooses either 7 or 30 days of river data. The data is downloaded, sampled, and displayed in appropriate increments.
 
 **Current Interface:**
 
