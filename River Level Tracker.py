@@ -1,12 +1,11 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QComboBox, QPushButton, QSlider, QLabel
+from PyQt5.QtCore import Qt
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-
-Wilson_Ave_Flood_Level = 7.5  # estimated flood level in feet
 
 
 class MyApp(QWidget):
@@ -14,7 +13,7 @@ class MyApp(QWidget):
         super().__init__()
 
         self.initUI()
-        self.time_period = 30  # default value of 30 days
+        self.time_period = 21  # default value of 21 days
         self.site_id = '04119070'  # default station choice
 
     def initUI(self):
@@ -26,17 +25,23 @@ class MyApp(QWidget):
         self.combo_site = QComboBox(self)
         self.combo_site.addItem('Grand River - Wilson Ave Bridge')
         self.combo_site.addItem('Grand River - Downtown GR')
-        self.combo_site.addItem('Buck Creek at Wilson Ave')
         self.combo_site.move(50, 50)
-
         self.combo_site.currentTextChanged.connect(self.updateSiteId)
 
-        self.combo_time = QComboBox(self)
-        self.combo_time.addItem('30 days')
-        self.combo_time.addItem('7 days')
-        self.combo_time.move(135, 100)
+        # Add slider for time period
+        self.slider = QSlider(Qt.Horizontal, self)
+        self.slider.setMinimum(5)
+        self.slider.setMaximum(21)
+        self.slider.setValue(21)  # default value
+        self.slider.setTickPosition(QSlider.TicksBelow)
+        self.slider.setTickInterval(1)
+        self.slider.setFixedWidth(200)
+        self.slider.move(50, 100)
+        self.slider.valueChanged.connect(self.updateTimePeriod)
 
-        self.combo_time.currentTextChanged.connect(self.updateTimePeriod)
+        # Add label to display selected days
+        self.time_label = QLabel('21 days', self)
+        self.time_label.move(265, 100)
 
         self.button = QPushButton('Download and Display Data', self)
         self.button.move(75, 150)
@@ -44,21 +49,17 @@ class MyApp(QWidget):
 
         self.show()
 
-    def updateSiteId(self, text):  # set river station ID based on dropdown menu
+    def updateSiteId(self, text):
         if text == 'Grand River - Wilson Ave Bridge':
             self.site_id = '04119070'
         elif text == 'Grand River - Downtown GR':
             self.site_id = '04119000'
-        elif text == 'Buck Creek at Wilson Ave':
-            self.site_id = '04119160'
 
-    def updateTimePeriod(self, text):  # set time period based on dropdown menu
-        if text == '30 days':
-            self.time_period = 30
-        elif text == '7 days':
-            self.time_period = 7
+    def updateTimePeriod(self, value):
+        self.time_period = value
+        self.time_label.setText(f'{value} days')
 
-    def downloadAndDisplayData(self):  # button to execute functions
+    def downloadAndDisplayData(self):
         download_river_data(self.site_id, self.time_period)
         display_river_data(self.site_id)
 
@@ -70,11 +71,10 @@ Description: Downloads data for a selected river station from the USGS API. The 
 a file named river_level_data.rdb
 '''
 def download_river_data(station_id, num_days):
-
     # Get current date and time
     current_datetime = datetime.now()
 
-    # Calculate date 30 days ago
+    # Calculate date `num_days` ago
     start_datetime = current_datetime - timedelta(days=num_days)
 
     # Format dates as required by the USGS API
@@ -84,16 +84,18 @@ def download_river_data(station_id, num_days):
     # Construct query parameters dictionary
     params = {
         'sites': station_id,
+        'agencyCd': 'USGS',  # Added this parameter
         'parameterCd': '00065',
         'startDT': start_dt,
         'endDT': end_dt,
-        'siteStatus': 'all',
         'format': 'rdb'
     }
 
     # Build the URL
     base_url = 'https://waterservices.usgs.gov/nwis/iv/'
     url = base_url + '?' + urlencode(params)
+
+    print(f"Generated URL: {url}")  # Print the URL for debugging
 
     # Download the data
     response = requests.get(url)
@@ -105,8 +107,8 @@ def download_river_data(station_id, num_days):
             f.write(response.content)
         print('Data downloaded and saved successfully!')
     else:
-        print('Failed to download data:', response.status_code)
-
+        print(f'Failed to download data: {response.status_code}')
+        print(f'Response content: {response.text}')  # Print error details
 
 '''
 Function: display_river_data
@@ -138,17 +140,15 @@ def display_river_data(station_id):
 
     if station_id == '04119000':
         plt.title('Grand River at Grand Rapids, MI - 04119000')
-    elif station_id == '04119160':
-        plt.title('Buck Creek at Wilson Avenue at Grandville, MI - 04119160')
     elif station_id == '04119070':
         plt.title('Grand River at State Hwy M-11 at Grandville, MI - 04119070')
-        plt.axhline(y=Wilson_Ave_Flood_Level, color='r', linestyle='-')
-        fig.legend(['River Level', 'Estimated Bike Trail Flood Level'])
 
     ax1.tick_params(rotation=45)
     ax1.set_xticks(ax1.get_xticks()[::4])  # only display one x label per day
     plt.tight_layout()
     plt.show()
+
+
 
 
 if __name__ == '__main__':
