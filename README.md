@@ -2,12 +2,32 @@
 
 ## **Tools:**
 ### **River Level GUI**: 
-**Description**: User selects the USGS station by river location and city, and chooses either 7 or 30 days of river data. The data is downloaded, sampled, and displayed in appropriate increments.
+**Description**: User selects the USGS station by river location and city, and chooses 5 to 21 days of data. The data is downloaded, sampled, and displayed in appropriate increments.
 
-**Current Interface:**
+## Prerequisites
 
-<img width="176" alt="Current River GUI" src="https://github.com/user-attachments/assets/88c456a9-256e-45ec-8d29-dcdc5013197c">
+- **Python 3.8+**
+- Required packages:
+  - `PyQt5`: GUI framework
+  - `requests`: HTTP requests for data download
+  - `pandas`: Data manipulation
+  - `matplotlib`: Data visualization
 
-**Sample Plots**:
+Install dependencies via pip:
+```bash
+pip install PyQt5 requests pandas matplotlib
+```
 
-![Grand River 30 Days](https://github.com/user-attachments/assets/5b16c11b-d95d-4b14-80d4-365892068e38)
+## Project Structure
+
+- `River Level Tracker.py`: Main application file containing the GUI, data download, and visualization logic.
+- `river_level_data.rdb`: Output file where downloaded river data is saved (generated at runtime).
+
+## How to Run
+
+1. **Clone or Download**: Ensure `River Level Tracker.py` is in your working directory.
+2. **Install Dependencies**: Run the pip command above to install required packages.
+3. **Execute the Program**:
+   ```bash
+   python "River Level Tracker.py"
+   ```
